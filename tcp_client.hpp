@@ -29,31 +29,38 @@ public:
    
    enum { max_read_length = 2048 };
 
-   typedef std::vector<boost::uint8_t> buffertype;
-   typedef boost::shared_ptr<buffertype> buffertype_ptr;
 
    tcp_client(boost::asio::io_service &_io_service, tcp::resolver::iterator endpoint_iterator)
-      : m_io_service(_io_service), socket_(_io_service)
+      : m_io_service(_io_service),
+	socket_(_io_service)
       {
          connect_start(endpoint_iterator);
       }
 
-   tcp_client(void):m_io_service(tcp_io_service),socket_(m_io_service)
+   tcp_client(boost::asio::io_service &_io_service)
+      : m_io_service(_io_service),
+	socket_(_io_service)
       {
-	 //m_io_service_thread = boost::thread(boost::bind(&boost::asio::io_service::run,&m_io_service));	 
+      }
+   
+   void foo(void)
+      {
+	 while(1)
+	 {
+	    sleep(1);
+	 }
+      }
+   
+   tcp_client(void)
+      : m_io_service(tcp_io_service),
+        socket_(m_io_service)
+      {
       }
    
    void connect(const char *host, const char *port)
       {
-	 if(get_tcp_status()==CONNECTED || get_tcp_status()==CONNECTING)
-	 {
-	    do_close();
-	 }
-	 tcp::resolver::query query(host,port);
-	 tcp::resolver resolver(m_io_service);
-	 tcp::resolver::iterator iterator = resolver.resolve(query);
-	 connect_start(iterator);
-	 m_io_service_thread = boost::thread(boost::bind(&boost::asio::io_service::run,&m_io_service));
+
+	 m_io_service.post(boost::bind(&tcp_client::do_connect,this,host,port));
       }
    
    void write(const char msg) // pass the write data to the do_write function via the io service in the other thread
@@ -78,15 +85,47 @@ public:
 	 boost::mutex::scoped_lock l(status_mutex);
 	 return status;
       }
+
+   bool rx_queue_empty(void)
+      {
+	 boost::mutex::scoped_lock l(m_rx_queue_mutex);
+	 return m_rx_queue.empty();
+      }
+
+   buffertype_ptr get_rx_message(void)
+      {
+	 boost::mutex::scoped_lock l(m_rx_queue_mutex);
+	 return m_rx_queue.front();
+      }
+
+   void pop_rx_queue(void)
+      {
+	 boost::mutex::scoped_lock l(m_rx_queue_mutex);
+	 m_rx_queue.pop();
+      }
    
 private:
 
+   void do_connect(const char *host, const char *port)
+      {
+	 if(get_tcp_status()==CONNECTED || get_tcp_status()==CONNECTING)
+	 {
+	    std::cout << "trying to connect with status CONNECTED or CONNECTING" << std::endl;
+	    do_close();
+	 }
+	 tcp::resolver::query query(host,port);
+	 tcp::resolver resolver(m_io_service);
+	 tcp::resolver::iterator iterator = resolver.resolve(query);
+	 //m_io_service.post(boost::bind(&tcp_client::connect_start,this,iterator));
+	 connect_start(iterator);
+      }
+   
    void set_tcp_status(enStatus _status)
       {
 	 boost::mutex::scoped_lock l(status_mutex);
 	 status = _status;
       }
-   
+
    void connect_start(tcp::resolver::iterator endpoint_iterator)
       { // asynchronously connect a socket to the specified remote endpoint and call connect_complete when it completes or fails
 	 std::cout << "connecting" << std::endl;
@@ -134,6 +173,7 @@ private:
 
 	    {
 	       boost::mutex::scoped_lock l(m_rx_queue_mutex);
+	       //dump_buffer(_ptr->data(),_ptr->size());
 	       m_rx_queue.push(_ptr);
 	    }
 
@@ -232,24 +272,6 @@ private:
          std::cout << "closing connection" << std::endl;
 	 status = DISCONNECTED;
          socket_.close();
-      }
-
-   bool rx_queue_empty(void)
-      {
-	 boost::mutex::scoped_lock l(m_rx_queue_mutex);
-	 return m_rx_queue.empty();
-      }
-
-   buffertype_ptr get_rx_queue_buffertype_ptr(void)
-      {
-	 boost::mutex::scoped_lock l(m_rx_queue_mutex);
-	 return m_rx_queue.front();
-      }
-
-   void pop_rx_queue_buffer(void)
-      {
-	 boost::mutex::scoped_lock l(m_rx_queue_mutex);
-	 m_rx_queue.pop();
       }
 
 private:
