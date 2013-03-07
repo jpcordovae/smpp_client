@@ -6,6 +6,7 @@
 #include <deque>
 #include <iostream>
 #include <vector>
+#include <endian.h>
 
 //namespace smpp_v34 {
 

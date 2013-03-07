@@ -42,13 +42,14 @@ void smpp_client::bind_transmitter(const char *system_id, const char *password,
    memcpy( buffer + index, &addr_npi, 1);
    index++;
    memcpy( buffer + index, address_range, strlen(address_range) + 1 );
-   dump_buffer(buffer,total_size);
+   //dump_buffer(buffer,total_size);
    write(buffer,total_size);
    
    { // this is for the scoped_lock
       boost::mutex::scoped_lock(stack_mutex);
       m_sended_message_stack[sequence_number]->status = SS_SENDED;
    }
+   
    delete[] buffer;
 }
 
@@ -89,8 +90,13 @@ void smpp_client::unbind(void)
 
 void smpp_client::rx_handle(buffertype_ptr _bt_ptr)
 {
-   boost::uint32_t *val = (((boost::uint32_t *)_bt_ptr->data())+1);
-   switch(*val)
+   //dump_buffer(_bt_ptr->data(),_bt_ptr->size());
+   boost::uint32_t tmp;
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+   tmp = __bswap_32(*(((boost::uint32_t *)_bt_ptr->data())+1));
+#endif
+   
+   switch(tmp)
    {
    case GENERIC_NACK:
       break;
@@ -113,6 +119,8 @@ void smpp_client::rx_handle(buffertype_ptr _bt_ptr)
    case CANCEL_SM_RESP:
       break;
    case BIND_TRANSCEIVER_RESP:
+      std::cout << "bind transceiver response" << std::endl;
+      bind_transceiver_response(_bt_ptr);
       break;
    case ENQUIRE_LINK_RESP:
       break;

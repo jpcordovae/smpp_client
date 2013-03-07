@@ -24,26 +24,29 @@ public:
    };
 
    typedef boost::shared_ptr<stack_payload> stack_payload_ptr;
-   
-   smpp_client(boost::asio::io_service &_io_service, tcp::resolver::iterator endpoint_iterator)
-      :tcp_client(_io_service,endpoint_iterator),
+
+   smpp_client(boost::asio::io_service &_io_service)
+      :tcp_client(_io_service),
        m_smpp_status(SC_BIND_DISCONNECTED),
        rx_thread_exit(false)
       {
 	 m_windowing = 10;
 	 initialize_stack();
+	 m_rx_thread = boost::thread(boost::bind(&smpp_client::rx_loop,this));
       }
-
-   smpp_client(void):
-      m_smpp_status(SC_BIND_DISCONNECTED),
-      rx_thread_exit(false)
+   
+   smpp_client(void)
+      :m_smpp_status(SC_BIND_DISCONNECTED),
+       rx_thread_exit(false)
       {
 	 m_windowing = 10;
 	 initialize_stack();
-	 m_io_service.post(boost::bind(&smpp_client::rx_loop,this));
       }
    
-   ~smpp_client(){};
+   ~smpp_client()
+      {
+	 rx_thread_exit = true;
+      };
 
    enSMPPStatus get_smpp_status(void)
       {
@@ -55,7 +58,6 @@ public:
    void bind_receiver(void);
    void bind_transceiver(void);
    void unbind(void);
-
    void rx_handle(buffertype_ptr _bt_ptr);
    
 private:
@@ -65,16 +67,20 @@ private:
 	 // fill and maintain a normal 
 	 for(size_t k=0; k < MAX_STACK_SIZE; k++)
 	 {
-	    m_sended_message_stack[k] = stack_payload_ptr(new stack_payload());
+	    m_sended_message_stack[k] = stack_payload_ptr(new stack_payload);
 	 }
       }
 
    void rx_loop(void)
       {
-	 while(!rx_thread_exit){
-	    sleep(1);
-	    //rx_handle(get_rx_queue_buffertype_ptr());
-	    //pop_rx_queue_buffer();
+	 while(!rx_thread_exit)
+	 {
+	    usleep(10000); // sleep 10ms
+	    while(!rx_queue_empty())
+	    {
+	       rx_handle(get_rx_message());
+	       pop_rx_queue();
+	    }
 	 }
 	 
       }
@@ -121,6 +127,7 @@ private:
    void data_sm_resp(buffertype_ptr _ptr);
 
    bool rx_thread_exit;
+   boost::thread m_rx_thread;
    enSMPPStatus m_smpp_status;
    boost::mutex m_smpp_status_mutex;
    std::map<int,stack_payload_ptr> m_sended_message_stack;
