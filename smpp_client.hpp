@@ -54,9 +54,9 @@ public:
          return m_smpp_status;
       }
    
-   void bind_transmitter(const char *system_id, const char *password, const char *system_type, int interface_version, int addr_ton, int addr_npi, const char *address_range);
-   void bind_receiver(void);
-   void bind_transceiver(void);
+   void bind_transmitter(const char *system_id, const char *password, const char *system_type, INTEGER interface_version, INTEGER addr_ton, INTEGER addr_npi, const char *address_range);
+   void bind_receiver(const char *system_id, const char *password, const char *system_type, INTEGER interface_version, INTEGER addr_ton, INTEGER addr_npi, const char *address_range);
+   void bind_transceiver(const char *system_id, const char *password, const char *system_type, INTEGER interface_version, INTEGER addr_ton, INTEGER addr_npi, const char *address_range);
    void unbind(void);
    void rx_handle(buffertype_ptr _bt_ptr);
    
@@ -91,6 +91,26 @@ private:
          m_smpp_status = _smpp_status;
       }
 
+
+   bool free_stack_place(int _place)
+      {
+	 try
+	 {
+	    boost::mutex::scoped_lock l(stack_mutex);
+	    std::cout << "liberando espacio reservado " << _place << std::endl;
+	    if(m_sended_message_stack[_place]->status == SS_FREE)
+	    {
+	       std::cerr << "trying to free a place already free, check message stack !!" << std::endl;
+	    }
+	    
+	    m_sended_message_stack[_place]->status == SS_FREE;
+	    
+	 }catch(std::exception &e)
+	 {
+	    std::cerr << e.what() << std::endl;
+	 }
+      }
+   
    int reserve_stack_place(void)
       {
 	 try
@@ -134,6 +154,7 @@ private:
    std::queue<buffertype_ptr> m_pending_messages_queue;
    boost::mutex stack_mutex;
    size_t m_windowing;
+   std::string SMSCIdentifier; // SMSC name, from TRX/TR/TX PDU responses
 };
 
 #endif

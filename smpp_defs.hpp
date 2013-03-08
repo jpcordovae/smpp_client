@@ -3,9 +3,11 @@
 
 #include <boost/cstdint.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/thread.hpp>
 #include <deque>
 #include <iostream>
 #include <vector>
+#include <map>
 #include <endian.h>
 
 //namespace smpp_v34 {
@@ -253,5 +255,11 @@ void dump_buffer(boost::uint8_t *_buffer, size_t _size);
 typedef std::vector<boost::uint8_t> buffertype;
 typedef boost::shared_ptr<buffertype> buffertype_ptr;
 
+void swap_pdu_header(buffertype_ptr _bt_ptr);
+
+void set_up_command_status_error_string_codes(void);
+
+extern boost::mutex command_status_error_strings_mutex;
+extern std::map<boost::uint32_t,std::string> command_status_error_strings;
 
 #endif //END __SMPP_DEFS_HPP__
