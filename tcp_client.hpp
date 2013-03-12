@@ -72,7 +72,13 @@ public:
       {
 	 buffertype_ptr buffer_ptr(new buffertype());
 	 buffer_ptr->assign(_buffer,_buffer+_lenght);
+	 //dump_buffer(buffer_ptr->data(),buffer_ptr->size());
 	 m_io_service.post(boost::bind(&tcp_client::do_write_vct, this, buffer_ptr));
+      }
+
+   void write(buffertype_ptr _ptr)
+      {
+	 m_io_service.post(boost::bind(&tcp_client::do_write_vct, this, _ptr));
       }
    
    void close() // call the do_close function via the io service in the other thread

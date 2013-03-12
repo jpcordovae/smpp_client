@@ -20,7 +20,7 @@ public:
       stack_payload():status(SS_FREE)
 	 {}
       enStackStatus status;
-      buffertype_ptr buffer;
+      //buffertype_ptr buffer;
    };
 
    typedef boost::shared_ptr<stack_payload> stack_payload_ptr;
@@ -92,7 +92,7 @@ private:
       }
 
 
-   bool free_stack_place(int _place)
+   void free_stack_place(size_t _place)
       {
 	 try
 	 {
@@ -101,6 +101,7 @@ private:
 	    if(m_sended_message_stack[_place]->status == SS_FREE)
 	    {
 	       std::cerr << "trying to free a place already free, check message stack !!" << std::endl;
+	       return;
 	    }
 	    
 	    m_sended_message_stack[_place]->status == SS_FREE;

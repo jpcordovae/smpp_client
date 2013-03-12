@@ -54,9 +54,18 @@ int main(int argc, char* argv[])
 		       0x00,
 		       "");*/
 
-    //c.bind_transmitter("smppclient1","password","",0x034,0x00,0x00,"");    
-    //c.bind_receiver("smppclient1","password","",0x034,0x00,0x00,"");
+    /*c.bind_transmitter("smppclient1","password","",0x034,0x00,0x00,"");
+    while(c.get_smpp_status()!=smpp_client::SC_BIND_CONNECTED) { usleep(10000); }
+    c.unbind();
+    while(c.get_smpp_status()!=smpp_client::SC_BIND_DISCONNECTED) { usleep(10000); }
+    c.bind_receiver("smppclient1","password","",0x034,0x00,0x00,"");
+    while(c.get_smpp_status()!=smpp_client::SC_BIND_CONNECTED) { usleep(10000); }
+    c.unbind();
+    while(c.get_smpp_status()!=smpp_client::SC_BIND_DISCONNECTED) { usleep(10000); }
+    */
     c.bind_transceiver("smppclient1","password","",0x034,0x00,0x00,"");
+    while(c.get_smpp_status()!=smpp_client::SC_BIND_CONNECTED) { usleep(10000); }
+    //c.unbind();
     
     while(1)
     {
@@ -66,7 +75,7 @@ int main(int argc, char* argv[])
        {
 	  break;
        }
-       c.write(ch);
+       //c.write(ch);
     }
     
   }

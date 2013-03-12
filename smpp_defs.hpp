@@ -211,6 +211,7 @@ typedef boost::uint32_t INTEGER;
 //****************
 // replace_if_present_flag
 // is used to reques the SMSC to replace a previously submitted mesage, that is still pending delivery. Must have same service_type then the message to be replaced
+//
 #define RIPF_NOT_REPLACE    0x00 // Don't replace
 #define RIPF_REPLACE        0x01 // replace
 
